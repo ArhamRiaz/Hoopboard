@@ -7,6 +7,8 @@ All functions return plain Python dicts/lists so routes stay clean.
 import datetime
 from functools import lru_cache
 
+SEASON = "2025-26"
+
 from nba_api.stats.endpoints import (
     scoreboardv2,
     playergamelog,
@@ -118,7 +120,7 @@ def get_player_today_stats(nba_id: int) -> dict | None:
     try:
         log = playergamelog.PlayerGameLog(
             player_id=nba_id,
-            season="2024-25",
+            season=SEASON,
             season_type_all_star="Regular Season",
         )
         rows    = log.player_game_log.get_dict()
@@ -160,7 +162,7 @@ def get_player_season_averages(nba_id: int) -> dict | None:
     try:
         log = playergamelog.PlayerGameLog(
             player_id=nba_id,
-            season="2024-25",
+            season=SEASON,
             season_type_all_star="Regular Season",
         )
         rows    = log.player_game_log.get_dict()
@@ -197,7 +199,7 @@ def _standings_cache_key():
 def get_standings() -> dict:
     """Return East and West standings as lists."""
     try:
-        standings = leaguestandingsv3.LeagueStandingsV3(season="2024-25")
+        standings = leaguestandingsv3.LeagueStandingsV3(season=SEASON)
         rows    = standings.standings.get_dict()
         headers = rows["headers"]
         data    = rows["data"]
