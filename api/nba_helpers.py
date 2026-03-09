@@ -18,8 +18,6 @@ from nba_api.stats.endpoints import (
 from nba_api.stats.static import players as static_players
 
 
-# ── Player search ────────────────────────────────────────────────────────────
-
 def search_players(query: str) -> list[dict]:
     """Return players whose name contains `query` (case-insensitive)."""
     query = query.strip().lower()
@@ -54,7 +52,6 @@ def get_player_info(nba_id: int) -> dict | None:
         return None
 
 
-# ── Today's scoreboard ───────────────────────────────────────────────────────
 
 def get_today_games() -> list[dict]:
     """Return all games scheduled for today."""
@@ -109,8 +106,6 @@ def get_today_games() -> list[dict]:
         return []
 
 
-# ── Player today's stats ─────────────────────────────────────────────────────
-
 def get_player_today_stats(nba_id: int) -> dict | None:
     """
     Return a player's stats from today's game, or None if they didn't play.
@@ -132,7 +127,7 @@ def get_player_today_stats(nba_id: int) -> dict | None:
 
         latest = dict(zip(headers, data[0]))
 
-        # GAME_DATE format: "MAR 05, 2026" — normalise and compare
+        # GAME_DATE format: "MAR 05, 2026"
         game_date_str = latest.get("GAME_DATE", "")
         game_date = datetime.datetime.strptime(game_date_str, "%b %d, %Y").date()
         if game_date != datetime.date.today():
@@ -154,8 +149,6 @@ def get_player_today_stats(nba_id: int) -> dict | None:
         print(f"[nba_helpers] get_player_today_stats({nba_id}) error: {e}")
         return None
 
-
-# ── Season averages ──────────────────────────────────────────────────────────
 
 def get_player_season_averages(nba_id: int) -> dict | None:
     """Return season averages for a player from their game log."""
@@ -189,7 +182,6 @@ def get_player_season_averages(nba_id: int) -> dict | None:
         return None
 
 
-# ── Standings ────────────────────────────────────────────────────────────────
 
 @lru_cache(maxsize=1)
 def _standings_cache_key():
@@ -208,7 +200,7 @@ def get_standings() -> dict:
         for row in data:
             d = dict(zip(headers, row))
             entry = {
-                "team":     d.get("TeamAbbreviation", ""),
+                "team":     d.get("TeamSlug", ""),
                 "city":     d.get("TeamCity", ""),
                 "name":     d.get("TeamName", ""),
                 "wins":     d.get("WINS", 0),
@@ -216,6 +208,7 @@ def get_standings() -> dict:
                 "pct":      f".{int(float(d.get('WinPCT', 0)) * 1000):03d}",
                 "conf_rank": d.get("ConferenceRecord", ""),
             }
+            print("standings team abbrev:",  d.get("TeamSlug", ""))
             if d.get("Conference") == "East":
                 east.append(entry)
             else:

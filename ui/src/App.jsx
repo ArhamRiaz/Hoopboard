@@ -1,14 +1,64 @@
 import { useState, useEffect, useCallback, useRef } from "react";
 
-// ─── Config ───────────────────────────────────────────────────────────────────
-
 const API = "http://localhost:5000/api";
 const NBA_HEADSHOT = (nbaId) =>
   `https://cdn.nba.com/headshots/nba/latest/1040x760/${nbaId}.png`;
-const TEAM_LOGO = (abbrev) =>
-  `https://a.espncdn.com/i/teamlogos/nba/500/${abbrev?.toLowerCase()}.png`;
 
-// ─── API helpers ─────────────────────────────────────────────────────────────
+// ESPN uses different slugs for some teams
+const ESPN_SLUG = {
+  GSW: "gs",
+  NYK: "ny",
+  NOP: "no",
+  SAS: "sa",
+  UTA: "utah",
+  NJN: "bkn",
+  NOH: "no",
+};
+
+const STANDINGS_SLUG = {
+  hawks: "atl",
+  celtics: "bos",
+  nets: "bkn",
+  hornets: "cha",
+  bulls: "chi",
+  cavaliers: "cle",
+  mavericks: "dal",
+  nuggets: "den",
+  pistons: "det",
+  warriors: "gs",
+  rockets: "hou",
+  pacers: "ind",
+  clippers: "lac",
+  lakers: "lal",
+  grizzlies: "mem",
+  heat: "mia",
+  bucks: "mil",
+  timberwolves: "min",
+  pelicans: "no",
+  knicks: "ny",
+  thunder: "okc",
+  magic: "orl",
+  sixers: "phi",
+  suns: "phx",
+  blazers: "por",
+  kings: "sac",
+  spurs: "sa",
+  raptors: "tor",
+  jazz: "utah",
+  wizards: "wsh",
+};
+
+const TEAM_LOGO = (abbrev) => {
+  if (!abbrev) return "";
+  const lower = abbrev.toLowerCase();
+  // If it's a full name slug (standings), look it up directly
+  if (STANDINGS_SLUG[lower])
+    return `https://a.espncdn.com/i/teamlogos/nba/500/${STANDINGS_SLUG[lower]}.png`;
+  // Otherwise treat it as an abbreviation (scoreboard)
+  const upper = abbrev.toUpperCase();
+  const slug = ESPN_SLUG[upper] ?? lower;
+  return `https://a.espncdn.com/i/teamlogos/nba/500/${slug}.png`;
+};
 
 const api = {
   get: (path) => fetch(`${API}${path}`).then((r) => r.json()),
@@ -21,8 +71,6 @@ const api = {
   delete: (path) =>
     fetch(`${API}${path}`, { method: "DELETE" }).then((r) => r.json()),
 };
-
-// ─── Styles ───────────────────────────────────────────────────────────────────
 
 const FONTS = `@import url('https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@400;600;700;800&family=Barlow:wght@300;400;500;600&display=swap');`;
 
@@ -94,8 +142,8 @@ const styles = `
   .semi   { color: #9CA3AF; }
 
   .standings-row {
-    display: grid; grid-template-columns: 24px 28px 1fr 36px 36px 60px;
-    gap: 8px; align-items: center;
+    display: grid; grid-template-columns: 18px 26px 1fr 28px 28px 44px;
+    gap: 6px; align-items: center;
     padding: 7px 0; border-bottom: 1px solid rgba(255,255,255,0.04); font-size: 13px;
   }
   .standings-row:last-child { border-bottom: none; }
@@ -160,8 +208,6 @@ const styles = `
   .refresh-btn:hover { background: rgba(255,255,255,0.09); color: #E8EAF0; }
 `;
 
-// ─── Shared components ────────────────────────────────────────────────────────
-
 function Avatar({ nbaId, name, size = 38, dim = false }) {
   const initials =
     name
@@ -192,33 +238,50 @@ function Avatar({ nbaId, name, size = 38, dim = false }) {
 
 function TeamLogo({ abbrev, size = 28 }) {
   const [err, setErr] = useState(false);
-  return err ? (
+  return (
     <div
       style={{
         width: size,
         height: size,
-        borderRadius: 4,
-        background: "rgba(255,255,255,0.07)",
+        flexShrink: 0,
         display: "flex",
         alignItems: "center",
         justifyContent: "center",
-        fontSize: size * 0.32,
-        fontWeight: 800,
-        color: "#9CA3AF",
-        fontFamily: "'Barlow Condensed', sans-serif",
-        letterSpacing: 0.5,
-        flexShrink: 0,
       }}
     >
-      {abbrev?.slice(0, 2)}
+      {err ? (
+        <div
+          style={{
+            width: size,
+            height: size,
+            borderRadius: 4,
+            background: "rgba(255,255,255,0.07)",
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "center",
+            fontSize: size * 0.32,
+            fontWeight: 800,
+            color: "#9CA3AF",
+            fontFamily: "'Barlow Condensed', sans-serif",
+            letterSpacing: 0.5,
+          }}
+        >
+          {abbrev?.slice(0, 2)}
+        </div>
+      ) : (
+        <img
+          src={TEAM_LOGO(abbrev)}
+          alt={abbrev}
+          onError={() => setErr(true)}
+          style={{
+            width: size,
+            height: size,
+            objectFit: "contain",
+            display: "block",
+          }}
+        />
+      )}
     </div>
-  ) : (
-    <img
-      src={TEAM_LOGO(abbrev)}
-      alt={abbrev}
-      onError={() => setErr(true)}
-      style={{ width: size, height: size, objectFit: "contain", flexShrink: 0 }}
-    />
   );
 }
 
@@ -451,8 +514,6 @@ function PlayerNotPlayingCard({ player }) {
   );
 }
 
-// ─── Dashboard page ───────────────────────────────────────────────────────────
-
 function Dashboard({ data, loading, error }) {
   if (error)
     return (
@@ -583,30 +644,45 @@ function Dashboard({ data, loading, error }) {
               }}
             >
               <span>#</span>
-              <span style={{ gridColumn: "span 2" }}>Team</span>
+              <span></span>
+              <span>Team</span>
               <span>W</span>
               <span>L</span>
               <span>PCT</span>
             </div>
+
             {standings[conf]?.map((t, i) => (
-              <div
-                key={t.team}
-                className="standings-row"
-                style={{ gridTemplateColumns: "24px 28px 1fr 36px 36px 60px" }}
-              >
-                <span className="muted" style={{ fontWeight: 600 }}>
+              <div key={t.team} className="standings-row">
+                <span
+                  className="muted"
+                  style={{ fontWeight: 600, fontSize: 12 }}
+                >
                   {i + 1}
                 </span>
-                <TeamLogo abbrev={t.team} size={20} />
+
+                <TeamLogo abbrev={t.team} size={22} />
                 <span
                   className="condensed"
-                  style={{ fontWeight: 700, fontSize: 14 }}
+                  style={{
+                    fontWeight: 700,
+                    fontSize: 13,
+                    whiteSpace: "nowrap",
+                    overflow: "hidden",
+                    textOverflow: "ellipsis",
+                  }}
                 >
-                  {t.team}
+                  {t.city} {t.name}
                 </span>
-                <span style={{ fontWeight: 600 }}>{t.wins}</span>
-                <span className="muted">{t.losses}</span>
-                <span className="orange" style={{ fontWeight: 600 }}>
+                <span style={{ fontWeight: 600, textAlign: "center" }}>
+                  {t.wins}
+                </span>
+                <span className="muted" style={{ textAlign: "center" }}>
+                  {t.losses}
+                </span>
+                <span
+                  className="orange"
+                  style={{ fontWeight: 600, textAlign: "center" }}
+                >
                   {t.pct}
                 </span>
               </div>
@@ -617,8 +693,6 @@ function Dashboard({ data, loading, error }) {
     </div>
   );
 }
-
-// ─── Players page ─────────────────────────────────────────────────────────────
 
 function FavRow({ player, onRemove }) {
   const [avgs, setAvgs] = useState(null);
@@ -868,8 +942,6 @@ function Players({ favouriteIds, onToggleFav }) {
     </div>
   );
 }
-
-// ─── Root ─────────────────────────────────────────────────────────────────────
 
 export default function App() {
   const [tab, setTab] = useState("dashboard");
