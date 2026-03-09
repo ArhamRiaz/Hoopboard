@@ -1,10 +1,12 @@
 import { useState, useEffect, useCallback, useRef } from "react";
 
+// ─── Config ───────────────────────────────────────────────────────────────────
+
 const API = "http://localhost:5000/api";
 const NBA_HEADSHOT = (nbaId) =>
   `https://cdn.nba.com/headshots/nba/latest/1040x760/${nbaId}.png`;
 
-// ESPN uses different slugs for some teams
+// ESPN uses different slugs for some teams — map the exceptions here
 const ESPN_SLUG = {
   GSW: "gs",
   NYK: "ny",
@@ -545,9 +547,18 @@ function Dashboard({ data, loading, error }) {
     games = [],
     standings = { east: [], west: [] },
     players = [],
+    display_date,
+    is_today,
   } = data ?? {};
   const playedToday = players.filter((p) => p.played_today);
   const notPlayed = players.filter((p) => !p.played_today);
+
+  const displayDateLabel = display_date
+    ? new Date(display_date + "T12:00:00").toLocaleDateString("en-US", {
+        month: "long",
+        day: "numeric",
+      })
+    : new Date().toLocaleDateString("en-US", { month: "long", day: "numeric" });
 
   return (
     <div
@@ -557,7 +568,9 @@ function Dashboard({ data, loading, error }) {
       <div style={{ display: "flex", flexDirection: "column", gap: 24 }}>
         {/* Favourite players */}
         <div>
-          <div className="section-label">My Players · Today</div>
+          <div className="section-label">
+            My Players · {is_today === false ? "Last Night" : "Today"}
+          </div>
           {players.length === 0 ? (
             <div className="card" style={{ padding: 28, textAlign: "center" }}>
               <div style={{ fontSize: 32, marginBottom: 8 }}>🏀</div>
@@ -595,17 +608,36 @@ function Dashboard({ data, loading, error }) {
 
         {/* Today's games */}
         <div>
-          <div className="section-label">
-            Today's Games ·{" "}
-            {new Date().toLocaleDateString("en-US", {
-              month: "long",
-              day: "numeric",
-            })}
+          <div
+            style={{
+              display: "flex",
+              alignItems: "center",
+              gap: 10,
+              marginBottom: 12,
+            }}
+          >
+            <div className="section-label" style={{ marginBottom: 0 }}>
+              {is_today === false ? "Last Night's Games" : "Today's Games"} ·{" "}
+              {displayDateLabel}
+            </div>
+            {is_today === false && (
+              <span
+                className="tag"
+                style={{
+                  background: "rgba(251,146,60,0.1)",
+                  color: "#FB923C",
+                  border: "1px solid rgba(251,146,60,0.2)",
+                  fontSize: 10,
+                }}
+              >
+                Today's games haven't started yet
+              </span>
+            )}
           </div>
           {games.length === 0 ? (
             <div className="card" style={{ padding: 20, textAlign: "center" }}>
               <div className="muted" style={{ fontSize: 13 }}>
-                No games scheduled today
+                No games scheduled
               </div>
             </div>
           ) : (
@@ -650,7 +682,6 @@ function Dashboard({ data, loading, error }) {
               <span>L</span>
               <span>PCT</span>
             </div>
-
             {standings[conf]?.map((t, i) => (
               <div key={t.team} className="standings-row">
                 <span
@@ -659,7 +690,6 @@ function Dashboard({ data, loading, error }) {
                 >
                   {i + 1}
                 </span>
-
                 <TeamLogo abbrev={t.team} size={22} />
                 <span
                   className="condensed"
