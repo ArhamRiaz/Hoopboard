@@ -1,4 +1,18 @@
-# Hoopboard — Flask Backend
+## Hoopboard
+<div align="center">
+
+ 
+**Your daily NBA dashboard — live scores, box scores, standings, and player tracking, all in one place.**
+ 
+![Python](https://img.shields.io/badge/Python-3.x-3776AB?style=flat-square&logo=python&logoColor=white)
+![Flask](https://img.shields.io/badge/Flask-Backend-000000?style=flat-square&logo=flask&logoColor=white)
+![SQLite](https://img.shields.io/badge/SQLite-Database-003B57?style=flat-square&logo=sqlite&logoColor=white)
+![Vite](https://img.shields.io/badge/Vite-Frontend-646CFF?style=flat-square&logo=vite&logoColor=white)
+
+ Hoopboard lets you track the performances of your favourite NBA players from a simple dashboard. Check today's scores, browse live quarter-by-quarter updates, search any player, and build a personal favourites list so you can instantly see how your favourite players performed.
+
+ ![Dashboard](screenshots/hoopboard.png)
+</div>
 
 ## Setup
 
